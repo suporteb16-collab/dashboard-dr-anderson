@@ -10,10 +10,12 @@ Google Ads.
 
 ## As duas abas
 
+**Google Ads abre primeiro** — é a frente principal do cliente hoje.
+
 | Aba | Fonte | Janela de dado |
 |---|---|---|
-| **Meta Ads** | `public.dash_dranderson_midia` → `"trafego-pago".meta_ads_drandersonr` | 01/01/2026 → 03/08/2026 |
 | **Google Ads** | `public.dash_google_ads`, filtrada em `cliente=Dr. Anderson Rodrigues` | 03/09/2026 → 07/09/2026 |
+| **Meta Ads** | `public.dash_dranderson_midia` → `"trafego-pago".meta_ads_drandersonr` | 01/01/2026 → 03/08/2026 |
 
 As duas contas veicularam em períodos **diferentes e sem sobreposição**, por isso cada
 aba resolve o filtro de período contra as próprias datas e o subtítulo de cada aba mostra
@@ -95,7 +97,31 @@ trocar isso faz a aba de Google voltar vazia.
 - **Comparação "vs período anterior"** usa uma janela de mesma duração imediatamente
   anterior à selecionada, recalculada no cliente a cada filtro.
 - **Conversões do Google são fracionárias** (ex.: `115,94`), por causa do modelo de
-  atribuição — o painel mostra com uma casa decimal em vez de arredondar.
+  atribuição — o painel mostra com uma casa decimal em vez de arredondar. Nesta conta,
+  hoje, a conversão é inteira (`1`) porque só houve uma.
+- **Custo por conversão é recalculado** (investimento ÷ conversões) em vez de usar
+  `metrics.cost_per_conversion` da API, senão não acompanharia o período filtrado. Para
+  uma janela que cobre a conversão inteira, os dois batem — conferido em 03/09: o Google
+  reporta **R$ 134,52** e o painel chega ao mesmo valor.
+
+### Conferência da conversão (07/09/2026)
+
+Batido campo a campo contra a API do Google Ads:
+
+| Dia | Investimento | Impressões | Cliques | Conversões | Custo/conv. |
+|---|---|---|---|---|---|
+| 03/09 | R$ 134,52 | 1.493 | 54 | **1** | **R$ 134,52** |
+| 04/09 a 07/09 | — | — | — | 0 | — |
+
+**Total do período: 1 conversão.** No recorte inteiro (03→07/09, R$ 263,74) o painel
+mostra R$ 263,74 por conversão, que é o custo real de aquisição considerando todo o
+investimento da janela — diferente dos R$ 134,52 que o Google atribui ao dia isolado.
+As duas leituras estão certas, só respondem a perguntas diferentes.
+
+⚠️ **O dia corrente fica defasado.** O banco guarda o snapshot da última carga do Stract;
+a campanha continua rodando depois disso. Em 07/09 o banco tinha R$ 24,38 / 632 impressões
+/ 12 cliques, enquanto a API já marcava R$ 28,41 / 677 / 14. Dias fechados batem exato —
+só o último dia se move até a carga seguinte.
 - **Funil:** a pílula de "% da etapa anterior" só aparece de Impressões em diante. Entre
   Investimento → Impressões são unidades diferentes (R$ vs. contagem) e a taxa não teria
   leitura válida.

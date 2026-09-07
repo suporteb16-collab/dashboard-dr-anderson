@@ -207,11 +207,11 @@ footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); fo
   </header>
 
   <div class="tabs" role="tablist">
-    <button role="tab" id="tab-meta" aria-selected="true" aria-controls="painel-meta">
-      Meta Ads<span class="tab-sub" id="tab-meta-sub">—</span>
-    </button>
-    <button role="tab" id="tab-google" aria-selected="false" aria-controls="painel-google">
+    <button role="tab" id="tab-google" aria-selected="true" aria-controls="painel-google">
       Google Ads<span class="tab-sub" id="tab-google-sub">—</span>
+    </button>
+    <button role="tab" id="tab-meta" aria-selected="false" aria-controls="painel-meta">
+      Meta Ads<span class="tab-sub" id="tab-meta-sub">—</span>
     </button>
   </div>
 
@@ -220,8 +220,81 @@ footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); fo
 
   <main id="app" class="hidden">
 
+    <!-- ================== ABA GOOGLE ADS ================== -->
+    <div id="painel-google" role="tabpanel" aria-labelledby="tab-google">
+      <div id="banners-google"></div>
+
+      <section style="margin-top:14px">
+        <div class="sec-head"><h2>Visão geral</h2><span class="hint" id="g-janela"></span></div>
+        <div class="kpis">
+          <div class="kpi hero">
+            <span class="lab">Investimento</span>
+            <div class="val" id="g-inv">—</div>
+            <div class="foot" id="g-inv-foot">—</div>
+            <span class="delta" id="g-inv-delta"></span>
+          </div>
+          <div class="kpi"><span class="lab">Impressões</span><div class="val sm" id="g-imp">—</div><div class="foot" id="g-imp-foot">CPM</div><span class="delta" id="g-imp-delta"></span></div>
+          <div class="kpi"><span class="lab">Cliques</span><div class="val sm" id="g-clk">—</div><div class="foot" id="g-clk-foot">CPC · CTR</div><span class="delta" id="g-clk-delta"></span></div>
+          <div class="kpi"><span class="lab">Conversões</span><div class="val sm" id="g-conv">—</div><div class="foot" id="g-conv-foot">CPConv.</div><span class="delta" id="g-conv-delta"></span></div>
+          <div class="kpi"><span class="lab">Taxa de conversão</span><div class="val sm" id="g-txconv">—</div><div class="foot" id="g-txconv-foot">conversões ÷ cliques</div><span class="delta" id="g-txconv-delta"></span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Funil de conversão</h2><span class="hint">investimento → impressões → cliques → conversões</span></div>
+        <div class="card">
+          <p class="cap">Cada etapa mostra o custo daquele degrau (CPM, CPC, custo por conversão) e, entre as
+          faixas, quanto passou da etapa anterior. A magnitude está na largura, nunca só na cor.</p>
+          <div id="g-funil-box"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Evolução diária</h2><span class="hint" id="g-janela2"></span></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Investimento por dia</h3>
+            <p class="cap">Gasto em Google Ads no período selecionado.</p>
+            <div class="plot"><canvas id="g-c-inv"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>CPM por dia</h3>
+            <p class="cap">Custo por mil impressões — eficiência de leilão, dia a dia.</p>
+            <div class="plot"><canvas id="g-c-cpm"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Detalhamento</h2><span class="hint">clique nos cabeçalhos para ordenar · comparação vs período anterior de mesma duração</span></div>
+        <div class="tabs-mini" role="group" aria-label="Agrupar por">
+          <button data-group="dia" aria-pressed="true">Por dia</button>
+          <button data-group="anuncio" aria-pressed="false">Por anúncio</button>
+        </div>
+        <div class="tw">
+          <div class="tw-scroll">
+          <table id="tabela-g">
+            <thead><tr>
+              <th data-key="chave"><button class="sort-btn" data-key="chave">Dia / Anúncio</button></th>
+              <th class="n" data-key="investimento"><button class="sort-btn" data-key="investimento">Investimento</button></th>
+              <th class="n" data-key="impressoes"><button class="sort-btn" data-key="impressoes">Impressões</button></th>
+              <th class="n" data-key="cpm"><button class="sort-btn" data-key="cpm">CPM</button></th>
+              <th class="n" data-key="cliques"><button class="sort-btn" data-key="cliques">Cliques</button></th>
+              <th class="n" data-key="cpc"><button class="sort-btn" data-key="cpc">CPC</button></th>
+              <th class="n" data-key="ctr"><button class="sort-btn" data-key="ctr">CTR</button></th>
+              <th class="n" data-key="conversoes"><button class="sort-btn" data-key="conversoes">Conversões</button></th>
+              <th class="n" data-key="cpconv"><button class="sort-btn" data-key="cpconv">CPConv.</button></th>
+              <th class="n" data-key="txconv"><button class="sort-btn" data-key="txconv">% vs cliques</button></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <!-- ================== ABA META ADS ================== -->
-    <div id="painel-meta" role="tabpanel" aria-labelledby="tab-meta">
+    <div id="painel-meta" role="tabpanel" aria-labelledby="tab-meta" class="hidden">
       <div id="banners-meta"></div>
 
       <section style="margin-top:14px">
@@ -302,79 +375,6 @@ footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); fo
                 <tbody></tbody>
               </table>
             </div>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- ================== ABA GOOGLE ADS ================== -->
-    <div id="painel-google" role="tabpanel" aria-labelledby="tab-google" class="hidden">
-      <div id="banners-google"></div>
-
-      <section style="margin-top:14px">
-        <div class="sec-head"><h2>Visão geral</h2><span class="hint" id="g-janela"></span></div>
-        <div class="kpis">
-          <div class="kpi hero">
-            <span class="lab">Investimento</span>
-            <div class="val" id="g-inv">—</div>
-            <div class="foot" id="g-inv-foot">—</div>
-            <span class="delta" id="g-inv-delta"></span>
-          </div>
-          <div class="kpi"><span class="lab">Impressões</span><div class="val sm" id="g-imp">—</div><div class="foot" id="g-imp-foot">CPM</div><span class="delta" id="g-imp-delta"></span></div>
-          <div class="kpi"><span class="lab">Cliques</span><div class="val sm" id="g-clk">—</div><div class="foot" id="g-clk-foot">CPC · CTR</div><span class="delta" id="g-clk-delta"></span></div>
-          <div class="kpi"><span class="lab">Conversões</span><div class="val sm" id="g-conv">—</div><div class="foot" id="g-conv-foot">CPConv.</div><span class="delta" id="g-conv-delta"></span></div>
-          <div class="kpi"><span class="lab">Taxa de conversão</span><div class="val sm" id="g-txconv">—</div><div class="foot" id="g-txconv-foot">conversões ÷ cliques</div><span class="delta" id="g-txconv-delta"></span></div>
-        </div>
-      </section>
-
-      <section>
-        <div class="sec-head"><h2>Funil de conversão</h2><span class="hint">investimento → impressões → cliques → conversões</span></div>
-        <div class="card">
-          <p class="cap">Cada etapa mostra o custo daquele degrau (CPM, CPC, custo por conversão) e, entre as
-          faixas, quanto passou da etapa anterior. A magnitude está na largura, nunca só na cor.</p>
-          <div id="g-funil-box"></div>
-        </div>
-      </section>
-
-      <section>
-        <div class="sec-head"><h2>Evolução diária</h2><span class="hint" id="g-janela2"></span></div>
-        <div class="grid g2">
-          <div class="card">
-            <h3>Investimento por dia</h3>
-            <p class="cap">Gasto em Google Ads no período selecionado.</p>
-            <div class="plot"><canvas id="g-c-inv"></canvas></div>
-          </div>
-          <div class="card">
-            <h3>CPM por dia</h3>
-            <p class="cap">Custo por mil impressões — eficiência de leilão, dia a dia.</p>
-            <div class="plot"><canvas id="g-c-cpm"></canvas></div>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="sec-head"><h2>Detalhamento</h2><span class="hint">clique nos cabeçalhos para ordenar · comparação vs período anterior de mesma duração</span></div>
-        <div class="tabs-mini" role="group" aria-label="Agrupar por">
-          <button data-group="dia" aria-pressed="true">Por dia</button>
-          <button data-group="anuncio" aria-pressed="false">Por anúncio</button>
-        </div>
-        <div class="tw">
-          <div class="tw-scroll">
-          <table id="tabela-g">
-            <thead><tr>
-              <th data-key="chave"><button class="sort-btn" data-key="chave">Dia / Anúncio</button></th>
-              <th class="n" data-key="investimento"><button class="sort-btn" data-key="investimento">Investimento</button></th>
-              <th class="n" data-key="impressoes"><button class="sort-btn" data-key="impressoes">Impressões</button></th>
-              <th class="n" data-key="cpm"><button class="sort-btn" data-key="cpm">CPM</button></th>
-              <th class="n" data-key="cliques"><button class="sort-btn" data-key="cliques">Cliques</button></th>
-              <th class="n" data-key="cpc"><button class="sort-btn" data-key="cpc">CPC</button></th>
-              <th class="n" data-key="ctr"><button class="sort-btn" data-key="ctr">CTR</button></th>
-              <th class="n" data-key="conversoes"><button class="sort-btn" data-key="conversoes">Conversões</button></th>
-              <th class="n" data-key="cpconv"><button class="sort-btn" data-key="cpconv">CPConv.</button></th>
-              <th class="n" data-key="txconv"><button class="sort-btn" data-key="txconv">% vs cliques</button></th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
           </div>
         </div>
       </section>
@@ -509,7 +509,7 @@ const barra = { borderRadius:4, borderSkipped:false, borderWidth:2, maxBarThickn
 /* ======================= ESTADO ======================= */
 let META = [];      // linhas cruas da view de Meta Ads
 let GADS = [];      // linhas cruas da view de Google Ads, já filtradas no Dr. Anderson
-let aba = 'meta';
+let aba = 'google';   // Google e a frente principal do cliente: abre primeiro
 let ordSort = { key:'investimento', dir:'desc' };
 let grupoTab = 'dia';
 
@@ -807,7 +807,11 @@ function renderGoogle(){
   deltaEl('#g-clk-delta', A.clk, P.clk);
 
   /* Conversões vêm fracionárias do Google (modelo de atribuição) — mostrar com uma
-     casa decimal, não arredondar para inteiro, que pareceria erro de dado. */
+     casa decimal, não arredondar para inteiro, que pareceria erro de dado.
+     O custo por conversão é recalculado aqui (investimento ÷ conversões) em vez de
+     usar metrics.cost_per_conversion da API: só assim ele acompanha o período
+     filtrado. Para uma janela que cobre a conversão inteira, os dois batem — em
+     03/09 o Google reporta R$ 134,52 e esta conta chega ao mesmo valor. */
   $('#g-conv').textContent = num1(A.conv);
   $('#g-conv-foot').textContent = nOrDash(cpconv, brl) + ' por conversão';
   deltaEl('#g-conv-delta', A.conv, P.conv);
