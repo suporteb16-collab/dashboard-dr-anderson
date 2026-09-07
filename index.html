@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dr. Anderson Rodrigues — Meta Ads & Google Ads</title>
+<meta name="description" content="Dashboard de performance de mídia do Dr. Anderson Rodrigues — Meta Ads e Google Ads.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* Paleta clássica B16 — mesma dos demais dashboards (Mundial Cromo, AAEMCWEB,
+   Matheus Godinho, Google Ads). 2 slots categóricos (amarelo/azul) validados em
+   claro e escuro. O amarelo fica abaixo de 3:1 no claro de propósito (é a cor da
+   marca), por isso toda barra leva rótulo direto — a leitura nunca depende só da cor. */
+:root{
+  color-scheme: light;
+  --plane:#f4f4f2; --surface:#fff; --surface2:#f9f9f7;
+  --border:#e5e5e0; --border2:#d0d0c8;
+  --yellow:#d4a800; --yellow-bg:#fff9e0;
+  --black:#111; --text:#1a1a1a; --muted:#777;
+  --grid:#e5e5e0; --baseline:#d0d0c8;
+  --cat1:#d4a800; --cat2:#3b82f6;
+  --good:#16a34a; --warn:#e08a00; --critical:#d03b3b;
+  --shadow:0 1px 2px rgba(17,17,17,.04), 0 2px 8px rgba(17,17,17,.05);
+}
+html.dark{
+  color-scheme: dark;
+  --plane:#0d0d0d; --surface:#1a1a1a; --surface2:#222;
+  --border:#2a2a2a; --border2:#333;
+  --yellow:#d4a800; --yellow-bg:rgba(212,168,0,.08);
+  --black:#f0f0f0; --text:#e8e8e8; --muted:#888;
+  --grid:#2a2a2a; --baseline:#333;
+  --cat1:#b08c00; --cat2:#3b82f6;
+  --good:#22c55e; --warn:#fab219; --critical:#e05555;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--plane); color:var(--text);
+  font-family:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1220px; margin:0 auto; padding:20px 18px 64px}
+
+header.top{
+  display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; justify-content:space-between;
+  padding:18px 0 16px; border-bottom:1px solid var(--border); margin-bottom:8px;
+}
+.brand-row{display:flex; align-items:center; gap:13px}
+.logo{width:44px; height:44px; border-radius:50%; object-fit:cover; display:block; flex:0 0 44px}
+.brand .kicker{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:4px}
+.brand h1{font-family:"Bebas Neue","DM Sans",sans-serif; font-weight:400; font-size:clamp(30px,4.6vw,44px); line-height:1; letter-spacing:.012em; margin:0; color:var(--black)}
+.brand .sub{color:var(--muted); font-size:13.5px; margin-top:6px}
+.brand .sub b{color:var(--text); font-weight:500}
+.tools{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.btn{font:inherit; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:7px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px}
+.btn:hover{background:var(--surface2)}
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--border2); border-radius:8px; overflow:hidden}
+.seg button{font:inherit; font-size:13px; border:0; background:transparent; color:var(--muted); padding:7px 12px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--black); color:var(--surface); font-weight:500}
+
+/* Abas de canal (Meta / Google). Cada aba tem seu próprio período e seus próprios
+   dados — trocar de aba não arrasta o filtro da outra, porque as duas contas têm
+   janelas de veiculação bem diferentes. */
+.tabs{display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:20px}
+.tabs button{font:inherit; font-size:14px; font-weight:500; border:0; background:transparent;
+  color:var(--muted); padding:11px 18px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px}
+.tabs button:hover{color:var(--text)}
+.tabs button[aria-selected="true"]{color:var(--black); border-bottom-color:var(--yellow)}
+.tabs .tab-sub{font-size:11.5px; color:var(--muted); font-weight:400; display:block; margin-top:2px}
+.tabs button[aria-selected="true"] .tab-sub{color:var(--muted)}
+
+.dtr{display:none; flex-basis:100%; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--muted)}
+.dtr.on{display:flex}
+.dtr label{display:inline-flex; align-items:center; gap:6px}
+.dtr input[type="date"]{font:inherit; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:6px 9px}
+.dtr .aviso{color:var(--warn)}
+
+.note{display:flex; gap:10px; align-items:flex-start; border:1px solid var(--border); border-left:3px solid var(--muted); background:var(--surface); border-radius:8px; padding:11px 14px; margin-bottom:12px; font-size:13.5px; color:var(--muted); box-shadow:var(--shadow)}
+.note b{color:var(--text); font-weight:500}
+.note .ic{flex:none}
+.note.warn{border-left-color:var(--warn)}
+.note.crit{border-left-color:var(--critical)}
+.note.info{border-left-color:var(--cat2)}
+.note code{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 5px}
+
+section{margin:30px 0 0}
+.sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px}
+h2{font-family:"Bebas Neue","DM Sans",sans-serif; font-weight:400; font-size:23px; letter-spacing:.03em; margin:0; color:var(--black)}
+.sec-head .hint{font-size:12.5px; color:var(--muted)}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(172px,1fr)); gap:12px}
+.kpi{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:15px 16px 14px; box-shadow:var(--shadow)}
+.kpi .lab{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:7px; display:block}
+.kpi .val{font-size:29px; font-weight:700; line-height:1.05; letter-spacing:-.02em; color:var(--black)}
+.kpi .val.sm{font-size:22px}
+.kpi .foot{font-size:12.5px; color:var(--muted); margin-top:6px}
+.kpi.hero{background:var(--black); border-color:var(--black)}
+.kpi.hero .lab{color:rgba(255,255,255,.6)}
+.kpi.hero .val{color:#fff; font-size:38px}
+.kpi.hero .foot{color:rgba(255,255,255,.75)}
+html.dark .kpi.hero{background:var(--surface2); border-color:var(--border2)}
+html.dark .kpi.hero .lab{color:var(--muted)}
+html.dark .kpi.hero .val{color:var(--black)}
+html.dark .kpi.hero .foot{color:var(--muted)}
+.kpi .delta{display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:600; margin-top:7px}
+.delta.up{color:var(--good)} .delta.down{color:var(--critical)} .delta.flat{color:var(--muted)}
+
+.grid{display:grid; gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px 14px; box-shadow:var(--shadow)}
+.card h3{font-size:14px; font-weight:500; margin:0 0 3px; color:var(--black)}
+.card .cap{font-size:12.5px; color:var(--muted); margin:0 0 14px}
+.plot{position:relative; height:250px}
+.plot.tall{height:320px}
+.plot.short{height:190px}
+
+/* Funil em trapézio — igual ao dos demais dashboards B16. A magnitude está na
+   largura, não na cor: as faixas de mídia usam o mesmo amarelo e só a última
+   (o resultado) vira azul. */
+.funil{display:flex; flex-direction:column; align-items:center; margin-top:4px}
+.ftrap{background:var(--cat1); border-radius:4px; display:flex; align-items:center; justify-content:space-between;
+       gap:14px; padding:0 20px; height:60px; margin:0 auto; min-width:190px;
+       clip-path:polygon(3% 0%, 97% 0%, 100% 100%, 0% 100%)}
+.ftrap.fim{background:#2563eb}
+.ft-left{display:flex; flex-direction:column; min-width:0}
+.ft-name{font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(17,17,17,.62); white-space:nowrap}
+.ft-val{font-family:"Bebas Neue","DM Sans",sans-serif; font-size:29px; line-height:1; color:#111; letter-spacing:.01em}
+.ft-right{text-align:right; white-space:nowrap}
+.ft-cost{font-family:"Bebas Neue","DM Sans",sans-serif; font-size:23px; line-height:1; color:#111}
+.ft-cost-lbl{font-size:10px; color:rgba(17,17,17,.62); margin-top:3px}
+.ftrap.fim .ft-name, .ftrap.fim .ft-cost-lbl{color:rgba(255,255,255,.75)}
+.ftrap.fim .ft-val, .ftrap.fim .ft-cost{color:#fff}
+.fc{display:flex; flex-direction:column; align-items:center; margin:3px auto}
+.fc-line{width:2px; height:11px; background:var(--border2)}
+.fc-tag{background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-size:10.5px;
+        font-weight:500; padding:3px 11px; border-radius:20px; white-space:nowrap}
+@media (max-width:520px){
+  .ftrap{height:52px; padding:0 13px; gap:8px}
+  .ft-val{font-size:23px} .ft-cost{font-size:18px}
+  .ft-cost-lbl,.ft-name{font-size:9px}
+}
+
+.tw{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:560px}
+#tabela-g{min-width:920px}
+th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap}
+th{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--surface2); position:sticky; top:0}
+td.n{text-align:right; font-variant-numeric:tabular-nums}
+th.n{text-align:right}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface2)}
+td.wrap-ok{white-space:normal; min-width:190px}
+.tw-scroll{max-height:520px; overflow-y:auto}
+.delta-cell{font-size:11.5px; font-weight:600; margin-left:5px}
+.sort-btn{background:none;border:none;font:inherit;color:inherit;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:3px}
+.sort-btn::after{content:'⇅'; font-size:9px; opacity:.5}
+.sort-btn[data-dir="asc"]::after{content:'↑'; opacity:1; color:var(--yellow)}
+.sort-btn[data-dir="desc"]::after{content:'↓'; opacity:1; color:var(--yellow)}
+.tabs-mini{display:inline-flex; background:var(--surface2); border:1px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:12px}
+.tabs-mini button{font:inherit; font-size:12.5px; border:0; background:transparent; color:var(--muted); padding:6px 14px; cursor:pointer}
+.tabs-mini button[aria-pressed="true"]{background:var(--black); color:var(--surface); font-weight:500}
+
+#loading,#erro{padding:38px 0; text-align:center; color:var(--muted); font-size:14px}
+#erro{color:var(--critical)}
+.hidden{display:none !important}
+footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); font-size:12.5px; color:var(--muted); display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between}
+@media (max-width:640px){ .plot{height:225px} .kpi .val{font-size:25px} .kpi.hero .val{font-size:32px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-row">
+        <img class="logo" src="data:image/png;base64,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" alt="Agência B16" width="44" height="44">
+        <div>
+          <div class="kicker">Agência B16 · Business Intelligence</div>
+          <h1>Dr. Anderson Rodrigues</h1>
+        </div>
+      </div>
+      <div class="sub">
+        Performance de mídia paga · <b>Meta Ads</b> e <b>Google Ads</b>
+      </div>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Período">
+        <button data-range="mes" aria-pressed="true">Mês atual</button>
+        <button data-range="30" aria-pressed="false">30 dias</button>
+        <button data-range="7" aria-pressed="false">7 dias</button>
+        <button data-range="all" aria-pressed="false">Tudo</button>
+        <button data-range="custom" aria-pressed="false">Período</button>
+      </div>
+      <button class="btn" id="btn-tema">◐ Tema</button>
+      <button class="btn" id="btn-refresh">↻ Atualizar</button>
+      <div class="dtr" id="dtr">
+        <label>De <input type="date" id="dt-de" aria-label="Data inicial"></label>
+        <label>Até <input type="date" id="dt-ate" aria-label="Data final"></label>
+        <button class="btn" id="dt-tudo">Máximo</button>
+        <span class="aviso hidden" id="dt-aviso">datas invertidas — troquei a ordem</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-meta" aria-selected="true" aria-controls="painel-meta">
+      Meta Ads<span class="tab-sub" id="tab-meta-sub">—</span>
+    </button>
+    <button role="tab" id="tab-google" aria-selected="false" aria-controls="painel-google">
+      Google Ads<span class="tab-sub" id="tab-google-sub">—</span>
+    </button>
+  </div>
+
+  <div id="loading">Carregando do Supabase…</div>
+  <div id="erro" class="hidden"></div>
+
+  <main id="app" class="hidden">
+
+    <!-- ================== ABA META ADS ================== -->
+    <div id="painel-meta" role="tabpanel" aria-labelledby="tab-meta">
+      <div id="banners-meta"></div>
+
+      <section style="margin-top:14px">
+        <div class="sec-head"><h2>Resultado de mídia</h2><span class="hint" id="m-janela"></span></div>
+        <div class="kpis">
+          <div class="kpi hero">
+            <span class="lab">Investimento</span>
+            <div class="val" id="m-inv">—</div>
+            <div class="foot" id="m-inv-foot">—</div>
+            <span class="delta" id="m-inv-delta"></span>
+          </div>
+          <div class="kpi"><span class="lab">Impressões</span><div class="val sm" id="m-imp">—</div><div class="foot" id="m-imp-foot">—</div><span class="delta" id="m-imp-delta"></span></div>
+          <div class="kpi"><span class="lab">Cliques no link</span><div class="val sm" id="m-clk">—</div><div class="foot" id="m-clk-foot">—</div><span class="delta" id="m-clk-delta"></span></div>
+          <div class="kpi"><span class="lab">Conversas iniciadas</span><div class="val sm" id="m-conv">—</div><div class="foot" id="m-conv-foot">—</div><span class="delta" id="m-conv-delta"></span></div>
+          <div class="kpi"><span class="lab">Custo por conversa</span><div class="val sm" id="m-cpconv">—</div><div class="foot" id="m-cpconv-foot">—</div><span class="delta" id="m-cpconv-delta"></span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Eficiência de mídia</h2><span class="hint">Meta Ads</span></div>
+        <div class="kpis">
+          <div class="kpi"><span class="lab">CPM</span><div class="val sm" id="m-cpm">—</div><div class="foot" id="m-cpm-foot">—</div><span class="delta" id="m-cpm-delta"></span></div>
+          <div class="kpi"><span class="lab">CPC</span><div class="val sm" id="m-cpc">—</div><div class="foot" id="m-cpc-foot">—</div><span class="delta" id="m-cpc-delta"></span></div>
+          <div class="kpi"><span class="lab">CTR</span><div class="val sm" id="m-ctr">—</div><div class="foot" id="m-ctr-foot">cliques ÷ impressões</div><span class="delta" id="m-ctr-delta"></span></div>
+          <div class="kpi"><span class="lab">Engajamentos</span><div class="val sm" id="m-eng">—</div><div class="foot" id="m-eng-foot">—</div><span class="delta" id="m-eng-delta"></span></div>
+          <div class="kpi"><span class="lab">Respostas ao 1º contato</span><div class="val sm" id="m-reply">—</div><div class="foot" id="m-reply-foot">—</div><span class="delta" id="m-reply-delta"></span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Funil de mídia</h2><span class="hint" id="m-funil-hint">do impacto à conversa</span></div>
+        <div class="card">
+          <h3 id="m-funil-titulo">Do anúncio à conversa iniciada</h3>
+          <p class="cap" id="m-funil-cap">Cada etapa mostra o custo daquele degrau e, entre as faixas, quanto passou
+          da etapa anterior. A magnitude está na largura, nunca só na cor.</p>
+          <div id="m-funil-box"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Evolução diária</h2></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Investimento por dia</h3>
+            <p class="cap">Gasto em Meta Ads no período selecionado.</p>
+            <div class="plot"><canvas id="m-c-gasto"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>Impressões e cliques por dia</h3>
+            <p class="cap">Alcance vs. interesse.</p>
+            <div class="plot"><canvas id="m-c-alcance"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Onde o dinheiro foi investido</h2><span class="hint">gasto por dimensão</span></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Campanhas</h3>
+            <p class="cap">Ordenado por gasto.</p>
+            <div class="plot short"><canvas id="m-c-campanha"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>Conjuntos</h3>
+            <p class="cap">Cada conjunto de anúncios.</p>
+            <div class="plot short"><canvas id="m-c-adset"></canvas></div>
+          </div>
+        </div>
+        <div class="grid" style="margin-top:14px">
+          <div class="card">
+            <h3>Criativos</h3>
+            <p class="cap">Ordenado por gasto. Detalhe completo na tabela abaixo.</p>
+            <div class="plot tall"><canvas id="m-c-criativo"></canvas></div>
+            <div class="tw" style="margin-top:14px">
+              <table id="m-tab-criativo">
+                <thead><tr><th>Criativo</th><th class="n">Gasto</th><th class="n">Impressões</th><th class="n">Cliques</th><th class="n">CTR</th><th class="n">Conversas</th><th class="n">Custo/conversa</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================== ABA GOOGLE ADS ================== -->
+    <div id="painel-google" role="tabpanel" aria-labelledby="tab-google" class="hidden">
+      <div id="banners-google"></div>
+
+      <section style="margin-top:14px">
+        <div class="sec-head"><h2>Visão geral</h2><span class="hint" id="g-janela"></span></div>
+        <div class="kpis">
+          <div class="kpi hero">
+            <span class="lab">Investimento</span>
+            <div class="val" id="g-inv">—</div>
+            <div class="foot" id="g-inv-foot">—</div>
+            <span class="delta" id="g-inv-delta"></span>
+          </div>
+          <div class="kpi"><span class="lab">Impressões</span><div class="val sm" id="g-imp">—</div><div class="foot" id="g-imp-foot">CPM</div><span class="delta" id="g-imp-delta"></span></div>
+          <div class="kpi"><span class="lab">Cliques</span><div class="val sm" id="g-clk">—</div><div class="foot" id="g-clk-foot">CPC · CTR</div><span class="delta" id="g-clk-delta"></span></div>
+          <div class="kpi"><span class="lab">Conversões</span><div class="val sm" id="g-conv">—</div><div class="foot" id="g-conv-foot">CPConv.</div><span class="delta" id="g-conv-delta"></span></div>
+          <div class="kpi"><span class="lab">Taxa de conversão</span><div class="val sm" id="g-txconv">—</div><div class="foot" id="g-txconv-foot">conversões ÷ cliques</div><span class="delta" id="g-txconv-delta"></span></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Funil de conversão</h2><span class="hint">investimento → impressões → cliques → conversões</span></div>
+        <div class="card">
+          <p class="cap">Cada etapa mostra o custo daquele degrau (CPM, CPC, custo por conversão) e, entre as
+          faixas, quanto passou da etapa anterior. A magnitude está na largura, nunca só na cor.</p>
+          <div id="g-funil-box"></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Evolução diária</h2><span class="hint" id="g-janela2"></span></div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>Investimento por dia</h3>
+            <p class="cap">Gasto em Google Ads no período selecionado.</p>
+            <div class="plot"><canvas id="g-c-inv"></canvas></div>
+          </div>
+          <div class="card">
+            <h3>CPM por dia</h3>
+            <p class="cap">Custo por mil impressões — eficiência de leilão, dia a dia.</p>
+            <div class="plot"><canvas id="g-c-cpm"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="sec-head"><h2>Detalhamento</h2><span class="hint">clique nos cabeçalhos para ordenar · comparação vs período anterior de mesma duração</span></div>
+        <div class="tabs-mini" role="group" aria-label="Agrupar por">
+          <button data-group="dia" aria-pressed="true">Por dia</button>
+          <button data-group="anuncio" aria-pressed="false">Por anúncio</button>
+        </div>
+        <div class="tw">
+          <div class="tw-scroll">
+          <table id="tabela-g">
+            <thead><tr>
+              <th data-key="chave"><button class="sort-btn" data-key="chave">Dia / Anúncio</button></th>
+              <th class="n" data-key="investimento"><button class="sort-btn" data-key="investimento">Investimento</button></th>
+              <th class="n" data-key="impressoes"><button class="sort-btn" data-key="impressoes">Impressões</button></th>
+              <th class="n" data-key="cpm"><button class="sort-btn" data-key="cpm">CPM</button></th>
+              <th class="n" data-key="cliques"><button class="sort-btn" data-key="cliques">Cliques</button></th>
+              <th class="n" data-key="cpc"><button class="sort-btn" data-key="cpc">CPC</button></th>
+              <th class="n" data-key="ctr"><button class="sort-btn" data-key="ctr">CTR</button></th>
+              <th class="n" data-key="conversoes"><button class="sort-btn" data-key="conversoes">Conversões</button></th>
+              <th class="n" data-key="cpconv"><button class="sort-btn" data-key="cpconv">CPConv.</button></th>
+              <th class="n" data-key="txconv"><button class="sort-btn" data-key="txconv">% vs cliques</button></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      <span>Agência B16 · Business Intelligence — Henrique Cardoso</span>
+      <span id="rodape"></span>
+    </footer>
+  </main>
+</div>
+
+<script>
+'use strict';
+
+/* ======================= CONFIG ======================= */
+const SB_URL = 'https://afmisfmhfloabudcajbh.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_eNNYTx-b4zWWjM8A7XuI5Q_SqcBW7tL';
+const V_META = 'dash_dranderson_midia';
+const V_GADS = 'dash_google_ads';
+/* A view do Google Ads é compartilhada entre todos os clientes da B16; aqui ela é
+   filtrada no PostgREST para trazer só o Dr. Anderson. O nome tem ponto depois do
+   "Dr" nessa base (diferente da conta do Meta, que é "Dr Anderson Rodrigues"). */
+const CLIENTE_GADS = 'Dr. Anderson Rodrigues';
+/* metrics_cost_micros já vem convertido em reais pelo Stract na ingestão — apesar
+   do nome sugerir micros crus, NÃO dividir por 1e6 de novo. */
+
+/* ======================= UTIL ======================= */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const brl = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+const brlCurto = v => Math.abs(v) >= 1000
+  ? 'R$ ' + (v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1}) + 'k' : brl(v);
+const numBR = v => (v||0).toLocaleString('pt-BR');
+const num1 = v => (v||0).toLocaleString('pt-BR',{maximumFractionDigits:1});
+const pct = (a,b) => { if(!b) return '—'; const v = a/b*100;
+  return (v < 10 ? v.toFixed(1) : v.toFixed(0)).replace('.',',') + '%'; };
+const div = (a,b) => b ? a/b : null;
+const nOrDash = (v, fmt) => v == null ? '—' : fmt(v);
+const dataBR = iso => { if(!iso) return '—'; const p = String(iso).slice(0,10).split('-'); return p.length===3 ? p[2]+'/'+p[1] : iso; };
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const soma = (arr, f) => arr.reduce((s,o) => s + (Number(f(o))||0), 0);
+
+function encurtar(s, n=36){
+  s = String(s);
+  if (s.length <= n) return s;
+  const cab = Math.ceil((n-1)*0.55);
+  return s.slice(0,cab) + '…' + s.slice(-(n-1-cab));
+}
+
+/* ======================= FONTE ======================= */
+/* PostgREST corta em 1000 linhas por padrão. A tabela do Google Ads tem ~11 mil
+   linhas somando todos os clientes, então uma carga sem paginação pode perder
+   dados. Pagina com Range até a resposta vir menor que a página. */
+async function sbPaginado(view, params, tamanho=1000){
+  let tudo = [], offset = 0;
+  for(;;){
+    const url = `${SB_URL}/${view}?${params}`;
+    const r = await fetch(url, { headers:{ apikey:SB_KEY, Authorization:'Bearer '+SB_KEY,
+      Range:`${offset}-${offset+tamanho-1}` }, cache:'no-store' });
+    if (!r.ok) throw new Error(`${view}: HTTP ${r.status} — ${(await r.text()).slice(0,140)}`);
+    const lote = await r.json();
+    tudo = tudo.concat(lote);
+    if (lote.length < tamanho) break;
+    offset += tamanho;
+  }
+  return tudo;
+}
+
+function agrupar(arr, fn){
+  const m = new Map();
+  arr.forEach(o => { const k = fn(o) ?? '(sem atribuição)'; if(!m.has(k)) m.set(k,[]); m.get(k).push(o); });
+  return m;
+}
+
+/* ======================= CHART.JS ======================= */
+const escuro = () => document.documentElement.classList.contains('dark');
+
+const graficos = {};
+function desenhar(id, cfg){
+  if (graficos[id]) graficos[id].destroy();
+  const el = document.getElementById(id); if (!el) return;
+  graficos[id] = new Chart(el.getContext('2d'), cfg);
+}
+
+const rotulos = {
+  id:'rotulos',
+  afterDatasetsDraw(ch, _a, opts){
+    const fmt = opts.fmt || (v => v);
+    const ctx = ch.ctx; ctx.save();
+    ctx.font = '600 11px "DM Sans", system-ui, sans-serif';
+    ctx.fillStyle = css('--muted');
+    ch.data.datasets.forEach((ds, di) => {
+      const meta = ch.getDatasetMeta(di); if (meta.hidden) return;
+      meta.data.forEach((el, i) => {
+        const v = ds.data[i]; if (v == null || v === 0) return;
+        const horiz = ch.options.indexAxis === 'y';
+        ctx.textAlign = horiz ? 'left' : 'center';
+        ctx.textBaseline = horiz ? 'middle' : 'bottom';
+        ctx.fillText(fmt(v, di), el.x + (horiz ? 6 : 0), el.y + (horiz ? 0 : -4));
+      });
+    });
+    ctx.restore();
+  }
+};
+Chart.register(rotulos);
+
+function eixos({horiz=false, moeda=false, pad=1.2} = {}){
+  const tick = { color: css('--muted'), font:{ family:'"DM Sans", system-ui, sans-serif', size:11 } };
+  const val = {
+    grid:{ color: css('--grid'), drawTicks:false }, border:{ color: css('--baseline') },
+    ticks:{ ...tick, precision: moeda ? undefined : 0, callback: v => moeda ? brlCurto(v) : v },
+    grace: Math.round((pad-1)*100) + '%', beginAtZero:true,
+  };
+  const cat = { grid:{display:false}, border:{ color: css('--baseline') },
+                ticks:{ ...tick, autoSkip: !horiz, maxRotation: horiz ? undefined : 0,
+                        crossAlign: horiz ? 'far' : undefined } };
+  return horiz ? { x:val, y:cat } : { x:cat, y:val };
+}
+function tooltip(fmt){
+  return { enabled:true, backgroundColor: escuro() ? '#333' : '#111', titleColor:'#fff', bodyColor:'#fff',
+    borderWidth:0, padding:10, cornerRadius:7, displayColors:true, boxWidth:9, boxHeight:9,
+    titleFont:{ family:'"DM Sans", system-ui, sans-serif', size:12.5, weight:'500' },
+    bodyFont:{ family:'"DM Sans", system-ui, sans-serif', size:12.5 }, callbacks:{ label:fmt } };
+}
+const BASE = { responsive:true, maintainAspectRatio:false, animation:{duration:250},
+               interaction:{ mode:'index', intersect:false } };
+const barra = { borderRadius:4, borderSkipped:false, borderWidth:2, maxBarThickness:38 };
+
+/* ======================= ESTADO ======================= */
+let META = [];      // linhas cruas da view de Meta Ads
+let GADS = [];      // linhas cruas da view de Google Ads, já filtradas no Dr. Anderson
+let aba = 'meta';
+let ordSort = { key:'investimento', dir:'desc' };
+let grupoTab = 'dia';
+
+/* Colunas de conversa entram no pipeline do Stract depois da primeira carga; até a
+   extração rodar com os campos novos, a view devolve `undefined` neles. Detectar
+   isso permite trocar o funil e os KPIs em vez de mostrar zeros que parecem dado. */
+const temConversas = () => META.some(r => r.conversas != null);
+
+/* ======================= PERÍODO ======================= */
+/* Cada aba tem seu próprio intervalo de dados — a conta do Meta veiculou de janeiro
+   a agosto, a do Google só a partir de setembro — então o período é resolvido
+   sempre contra as datas da aba ativa, nunca contra "hoje" ou contra a outra aba. */
+function janela(dados, campoDia='dia'){
+  const seg = ($('.seg button[aria-pressed="true"]')||{}).dataset?.range || 'mes';
+  $('#dtr').classList.toggle('on', seg === 'custom');
+
+  const datas = dados.map(r => r[campoDia]).filter(Boolean).map(d => String(d).slice(0,10)).sort();
+  const minD = datas[0], maxD = datas[datas.length-1];
+
+  let de = null, ate = null;
+  if (seg === 'custom'){
+    de  = $('#dt-de').value  || minD || null;
+    ate = $('#dt-ate').value || maxD || null;
+    const invertido = de && ate && de > ate;
+    if (invertido){ [de, ate] = [ate, de]; $('#dt-de').value = de; $('#dt-ate').value = ate; }
+    $('#dt-aviso').classList.toggle('hidden', !invertido);
+  } else if (seg === 'all'){
+    de = minD; ate = maxD;
+  } else if (seg === 'mes'){
+    /* Mês corrente do calendário, não "últimos 30 dias" — é o recorte que o cliente
+       pede para fechamento. Quando a conta não veiculou no mês atual (Meta parou em
+       agosto), o painel mostra "sem dado no período" em vez de números de outro mês. */
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    de  = isoLocal(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+    ate = isoLocal(hoje);
+  } else {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    ate = isoLocal(hoje);
+    const c = new Date(hoje); c.setDate(c.getDate() - (parseInt(seg,10)-1));
+    de = isoLocal(c);
+  }
+  return { de, ate, minD, maxD };
+}
+
+const dentro = (d, a, b) => { const s = String(d||'').slice(0,10); return (!a || s >= a) && (!b || s <= b); };
+
+/* Janela imediatamente anterior, de mesma duração, para as comparações. */
+function anterior(de, ate){
+  if (!de || !ate) return { de:null, ate:null };
+  const dDe = new Date(de+'T00:00:00'), dAte = new Date(ate+'T00:00:00');
+  const dias = Math.round((dAte - dDe) / 86400000) + 1;
+  const ateAntD = new Date(dDe); ateAntD.setDate(ateAntD.getDate() - 1);
+  const deAntD = new Date(ateAntD); deAntD.setDate(deAntD.getDate() - (dias - 1));
+  return { de: isoLocal(deAntD), ate: isoLocal(ateAntD) };
+}
+
+function deltaEl(id, atualV, antV, corInvertida=false){
+  const el = $(id); if (!el) return;
+  if (atualV == null || antV == null || antV === 0){ el.className='delta flat'; el.textContent=''; return; }
+  const variacao = (atualV - antV) / antV * 100;
+  const sobe = variacao > 0.5, desce = variacao < -0.5;
+  el.className = 'delta ' + (sobe ? (corInvertida ? 'down' : 'up') : desce ? (corInvertida ? 'up' : 'down') : 'flat');
+  if (!sobe && !desce){ el.textContent = '● estável vs período anterior'; return; }
+  el.textContent = `${sobe ? '▲' : '▼'} ${Math.abs(variacao).toFixed(0)}% vs período anterior`;
+}
+
+/* Trapézios do funil. `etapas` = [nome, valor, custo, rótulo do custo, formatador].
+   `saltoPct` diz a partir de qual índice a pílula de passagem faz sentido — entre
+   Investimento e Impressões são unidades diferentes (R$ vs contagem) e a taxa não
+   teria leitura válida. */
+function funil(alvo, etapas, saltoPct=1){
+  const usaveis = etapas.filter(e => e[1] != null);
+  const larg = i => usaveis.length < 2 ? 100 : 100 - 66 * (i / (usaveis.length - 1));
+  $(alvo).innerHTML = '<div class="funil">' + usaveis.map((e, i) => {
+    const [nome, val, custo, rotCusto, fmtVal] = e;
+    const ant = i ? usaveis[i-1][1] : null;
+    const elo = i < saltoPct ? '' : `<div class="fc"><div class="fc-line"></div>${ant > 0
+      ? `<div class="fc-tag">${esc(pct(val, ant))} da etapa anterior</div>` : ''
+      }<div class="fc-line"></div></div>`;
+    const ultima = i === usaveis.length - 1;
+    return `${elo}
+    <div class="ftrap${ultima ? ' fim' : ''}" style="width:${larg(i).toFixed(1)}%">
+      <div class="ft-left">
+        <div class="ft-name">${esc(nome)}</div>
+        <div class="ft-val">${fmtVal(val)}</div>
+      </div>
+      <div class="ft-right">
+        <div class="ft-cost">${esc(nOrDash(custo, brl))}</div>
+        <div class="ft-cost-lbl">${esc(rotCusto)}</div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+/* ======================= RENDER: META ADS ======================= */
+function renderMeta(){
+  const { de, ate, minD, maxD } = janela(META);
+  const atual = META.filter(r => dentro(r.dia, de, ate));
+  const ant = anterior(de, ate);
+  const prev = META.filter(r => dentro(r.dia, ant.de, ant.ate));
+
+  $('#m-janela').textContent = !META.length ? 'sem dado'
+    : atual.length ? `${dataBR(de)} → ${dataBR(ate)}`
+    : `${dataBR(de)} → ${dataBR(ate)} · sem dado no período`;
+
+  const ag = arr => ({
+    inv: soma(arr, r=>r.gasto), imp: soma(arr, r=>r.impressoes), clk: soma(arr, r=>r.cliques),
+    conv: soma(arr, r=>r.conversas), reply: soma(arr, r=>r.respostas), eng: soma(arr, r=>r.engajamentos),
+  });
+  const A = ag(atual), P = ag(prev);
+  const comConversas = temConversas();
+
+  const cpm = div(A.inv*1000, A.imp), cpmP = div(P.inv*1000, P.imp);
+  const cpc = div(A.inv, A.clk),      cpcP = div(P.inv, P.clk);
+  const ctr = div(A.clk, A.imp),      ctrP = div(P.clk, P.imp);
+  const cpconv = div(A.inv, A.conv),  cpconvP = div(P.inv, P.conv);
+
+  $('#m-inv').textContent = brl(A.inv);
+  $('#m-inv-foot').textContent = `${numBR(atual.length)} linha(s) de anúncio`;
+  deltaEl('#m-inv-delta', A.inv, P.inv);
+
+  $('#m-imp').textContent = numBR(A.imp);
+  $('#m-imp-foot').textContent = nOrDash(cpm, brl) + ' de CPM';
+  deltaEl('#m-imp-delta', A.imp, P.imp);
+
+  $('#m-clk').textContent = numBR(A.clk);
+  $('#m-clk-foot').textContent = nOrDash(cpc, brl) + ' · CTR ' + pct(A.clk, A.imp);
+  deltaEl('#m-clk-delta', A.clk, P.clk);
+
+  $('#m-conv').textContent  = comConversas ? numBR(A.conv) : '—';
+  $('#m-conv-foot').textContent = comConversas
+    ? 'conversas de WhatsApp/Direct iniciadas'
+    : 'aguardando a extração dos eventos de conversa';
+  deltaEl('#m-conv-delta', comConversas ? A.conv : null, P.conv);
+
+  $('#m-cpconv').textContent = comConversas ? nOrDash(cpconv, brl) : '—';
+  $('#m-cpconv-foot').textContent = comConversas
+    ? numBR(A.conv) + ' conversa(s) no período' : '—';
+  deltaEl('#m-cpconv-delta', comConversas ? cpconv : null, cpconvP, true);
+
+  $('#m-cpm').textContent = nOrDash(cpm, brl);
+  $('#m-cpm-foot').textContent = numBR(A.imp) + ' impressões';
+  deltaEl('#m-cpm-delta', cpm, cpmP, true);
+
+  $('#m-cpc').textContent = nOrDash(cpc, brl);
+  $('#m-cpc-foot').textContent = numBR(A.clk) + ' cliques no link';
+  deltaEl('#m-cpc-delta', cpc, cpcP, true);
+
+  $('#m-ctr').textContent = pct(A.clk, A.imp);
+  deltaEl('#m-ctr-delta', ctr, ctrP);
+
+  $('#m-eng').textContent = comConversas ? numBR(A.eng) : '—';
+  $('#m-eng-foot').textContent = comConversas ? 'interações com a publicação' : 'aguardando extração';
+  deltaEl('#m-eng-delta', comConversas ? A.eng : null, P.eng);
+
+  $('#m-reply').textContent = comConversas ? numBR(A.reply) : '—';
+  $('#m-reply-foot').textContent = comConversas
+    ? pct(A.reply, A.conv) + ' das conversas iniciadas' : 'aguardando extração';
+  deltaEl('#m-reply-delta', comConversas ? A.reply : null, P.reply);
+
+  /* ---- funil ---- */
+  const etapas = [
+    ['Investimento', A.inv, null, 'R$ investidos', brl],
+    ['Impressões',   A.imp, cpm,  'CPM (por 1.000)', numBR],
+    ['Cliques',      A.clk, cpc,  'CPC', numBR],
+  ];
+  if (comConversas) etapas.push(['Conversas iniciadas', A.conv, cpconv, 'Custo por conversa', numBR]);
+  funil('#m-funil-box', etapas, 2);
+
+  $('#m-funil-titulo').textContent = comConversas
+    ? 'Do anúncio à conversa iniciada' : 'Do anúncio ao clique';
+  $('#m-funil-hint').textContent = comConversas ? 'do impacto à conversa' : 'do impacto ao clique';
+
+  /* ---- evolução ---- */
+  const porDia = agrupar(atual, r => r.dia);
+  const dias = [...porDia.keys()].sort();
+  desenhar('m-c-gasto', {
+    type:'bar', data:{ labels:dias.map(dataBR), datasets:[{ label:'Investimento',
+      data:dias.map(d => soma(porDia.get(d), r=>r.gasto)),
+      backgroundColor:css('--cat1'), borderColor:css('--surface'), ...barra }]},
+    options:{ ...BASE, scales:eixos({moeda:true}), plugins:{ legend:{display:false},
+      tooltip: tooltip(c => brl(c.parsed.y)) } },
+  });
+
+  desenhar('m-c-alcance', {
+    type:'bar', data:{ labels:dias.map(dataBR), datasets:[
+      { label:'Impressões', data:dias.map(d => soma(porDia.get(d), r=>r.impressoes)),
+        backgroundColor:css('--cat1'), borderColor:css('--surface'), ...barra, yAxisID:'y' },
+      { label:'Cliques', data:dias.map(d => soma(porDia.get(d), r=>r.cliques)),
+        backgroundColor:css('--cat2'), borderColor:css('--surface'), ...barra, yAxisID:'y1' },
+    ]},
+    options:{ ...BASE, scales:{
+        x: eixos().x,
+        y: { ...eixos().y, position:'left' },
+        y1:{ ...eixos().y, position:'right', grid:{display:false} },
+      }, plugins:{ legend:{ display:true, position:'top', labels:{ color:css('--muted'), font:{ family:'"DM Sans", system-ui, sans-serif', size:12 } } },
+      tooltip: tooltip(c => `${c.dataset.label}: ${numBR(c.parsed.y)}`) } },
+  });
+
+  /* ---- por dimensão ---- */
+  function porDimensao(id, chaveFn, corte){
+    const g = agrupar(atual, chaveFn);
+    const chaves = [...g.entries()]
+      .map(([k, itens]) => ({ k, gasto: soma(itens, r=>r.gasto) }))
+      .sort((a,b) => b.gasto - a.gasto).slice(0, corte);
+    desenhar(id, {
+      type:'bar',
+      data:{ labels:chaves.map(x => encurtar(x.k, 30)), datasets:[
+        { label:'Investido', data:chaves.map(x=>x.gasto), backgroundColor:css('--cat1'), borderColor:css('--surface'), ...barra },
+      ]},
+      options:{ ...BASE, indexAxis:'y', scales:eixos({horiz:true, moeda:true, pad:1.3}),
+        plugins:{ legend:{display:false}, tooltip: tooltip(c => brl(c.parsed.x)),
+          rotulos:{ fmt: v => brlCurto(v) } } },
+    });
+    return chaves;
+  }
+
+  porDimensao('m-c-campanha', r => r.campanha, 6);
+  porDimensao('m-c-adset', r => r.conjunto, 6);
+  const cri = porDimensao('m-c-criativo', r => r.anuncio, 8);
+
+  const gmC = agrupar(atual, r => r.anuncio);
+  $('#m-tab-criativo tbody').innerHTML = cri.map(x => {
+    const mm = gmC.get(x.k) || [];
+    const imp = soma(mm,r=>r.impressoes), clk = soma(mm,r=>r.cliques), cv = soma(mm,r=>r.conversas);
+    return `<tr>
+      <td class="wrap-ok">${esc(x.k)}</td>
+      <td class="n">${esc(brl(x.gasto))}</td>
+      <td class="n">${numBR(imp)}</td>
+      <td class="n">${numBR(clk)}</td>
+      <td class="n">${esc(pct(clk, imp))}</td>
+      <td class="n">${comConversas ? numBR(cv) : '—'}</td>
+      <td class="n">${comConversas ? esc(nOrDash(div(x.gasto, cv), brl)) : '—'}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">sem dado no período</td></tr>';
+
+  /* ---- banners ---- */
+  const out = [];
+  if (!comConversas){
+    out.push(`<div class="note info"><span class="ic">●</span><div>
+      <b>Esta conta não usa pixel de compra.</b> As campanhas são de tráfego para o perfil,
+      engajamento e WhatsApp — o resultado aqui é <b>conversa iniciada</b>, não venda. Os
+      eventos de conversa acabaram de ser incluídos na extração do Stract e aparecem neste
+      painel assim que a próxima carga rodar.</div></div>`);
+  }
+  if (A.inv === 0 && META.length){
+    out.push(`<div class="note warn"><span class="ic">▲</span><div>
+      <b>Sem investimento no período selecionado.</b> A veiculação no Meta tem dado até
+      <b>${dataBR(maxD)}</b> — use <b>Tudo</b> ou escolha um período dentro dessa janela.</div></div>`);
+  }
+  const ctrA = div(A.clk, A.imp), ctrPr = div(P.clk, P.imp);
+  if (ctrA != null && ctrPr != null && ctrPr > 0 && (ctrA - ctrPr)/ctrPr < -0.25){
+    out.push(`<div class="note crit"><span class="ic">■</span><div>
+      <b>CTR caiu ${Math.abs(((ctrA-ctrPr)/ctrPr*100)).toFixed(0)}%</b> vs o período anterior de mesma
+      duração (${pct(A.clk,A.imp)} agora vs ${pct(P.clk,P.imp)} antes) — vale olhar criativos e
+      segmentação.</div></div>`);
+  }
+  $('#banners-meta').innerHTML = out.join('');
+}
+
+/* ======================= RENDER: GOOGLE ADS ======================= */
+function renderGoogle(){
+  const { de, ate, minD, maxD } = janela(GADS);
+  const atual = GADS.filter(r => dentro(r.dia, de, ate));
+  const ant = anterior(de, ate);
+  const prev = GADS.filter(r => dentro(r.dia, ant.de, ant.ate));
+
+  const txt = !GADS.length ? 'sem dado para este cliente'
+    : atual.length ? `${dataBR(de)} → ${dataBR(ate)}`
+    : `${dataBR(de)} → ${dataBR(ate)} · sem dado no período`;
+  $('#g-janela').textContent = txt;
+  $('#g-janela2').textContent = txt;
+
+  const ag = arr => ({
+    inv: soma(arr, r=>r.investimento), imp: soma(arr, r=>r.impressoes),
+    clk: soma(arr, r=>r.cliques), conv: soma(arr, r=>r.conversoes),
+  });
+  const A = ag(atual), P = ag(prev);
+  const cpm = div(A.inv*1000, A.imp), cpmP = div(P.inv*1000, P.imp);
+  const cpc = div(A.inv, A.clk),      cpcP = div(P.inv, P.clk);
+  const ctr = div(A.clk, A.imp),      ctrP = div(P.clk, P.imp);
+  const cpconv = div(A.inv, A.conv),  cpconvP = div(P.inv, P.conv);
+  const txconv = div(A.conv, A.clk),  txconvP = div(P.conv, P.clk);
+
+  $('#g-inv').textContent = brl(A.inv);
+  $('#g-inv-foot').textContent = `${numBR(atual.length)} linha(s) de anúncio`;
+  deltaEl('#g-inv-delta', A.inv, P.inv);
+
+  $('#g-imp').textContent = numBR(A.imp);
+  $('#g-imp-foot').textContent = nOrDash(cpm, brl) + ' de CPM';
+  deltaEl('#g-imp-delta', A.imp, P.imp);
+
+  $('#g-clk').textContent = numBR(A.clk);
+  $('#g-clk-foot').textContent = nOrDash(cpc, brl) + ' · CTR ' + pct(A.clk, A.imp);
+  deltaEl('#g-clk-delta', A.clk, P.clk);
+
+  /* Conversões vêm fracionárias do Google (modelo de atribuição) — mostrar com uma
+     casa decimal, não arredondar para inteiro, que pareceria erro de dado. */
+  $('#g-conv').textContent = num1(A.conv);
+  $('#g-conv-foot').textContent = nOrDash(cpconv, brl) + ' por conversão';
+  deltaEl('#g-conv-delta', A.conv, P.conv);
+
+  $('#g-txconv').textContent = pct(A.conv, A.clk);
+  deltaEl('#g-txconv-delta', txconv, txconvP);
+
+  funil('#g-funil-box', [
+    ['Investimento', A.inv,  null,   'R$ investidos', brl],
+    ['Impressões',   A.imp,  cpm,    'CPM (por 1.000)', numBR],
+    ['Cliques',      A.clk,  cpc,    'CPC', numBR],
+    ['Conversões',   A.conv, cpconv, 'Custo por conversão', num1],
+  ], 2);
+
+  const porDia = agrupar(atual, r => r.dia);
+  const dias = [...porDia.keys()].sort();
+  desenhar('g-c-inv', {
+    type:'bar', data:{ labels:dias.map(dataBR), datasets:[{ label:'Investimento',
+      data:dias.map(d => soma(porDia.get(d), r=>r.investimento)),
+      backgroundColor:css('--cat1'), borderColor:css('--surface'), ...barra }]},
+    options:{ ...BASE, scales:eixos({moeda:true}), plugins:{ legend:{display:false},
+      tooltip: tooltip(c => brl(c.parsed.y)) } },
+  });
+
+  desenhar('g-c-cpm', {
+    type:'line', data:{ labels:dias.map(dataBR), datasets:[{ label:'CPM',
+      data:dias.map(d => { const g = porDia.get(d);
+        return div(soma(g,r=>r.investimento)*1000, soma(g,r=>r.impressoes)); }),
+      borderColor:css('--cat2'), backgroundColor:css('--cat2'), pointRadius:3, pointHoverRadius:5,
+      pointBackgroundColor:css('--surface'), pointBorderColor:css('--cat2'), pointBorderWidth:2,
+      borderWidth:2, tension:.25, spanGaps:true }]},
+    options:{ ...BASE, scales:eixos({moeda:true, pad:1.3}), plugins:{ legend:{display:false},
+      tooltip: tooltip(c => c.parsed.y == null ? 'sem impressão no dia' : brl(c.parsed.y) + ' de CPM') } },
+  });
+
+  montarTabelaGoogle(atual, prev, ant.de);
+
+  const out = [];
+  if (A.inv === 0 && GADS.length){
+    out.push(`<div class="note warn"><span class="ic">▲</span><div>
+      <b>Sem investimento no período selecionado.</b> O Google Ads tem dado de
+      <b>${dataBR(minD)}</b> a <b>${dataBR(maxD)}</b> — use <b>Tudo</b> ou escolha um período
+      dentro dessa janela.</div></div>`);
+  }
+  $('#banners-google').innerHTML = out.join('');
+}
+
+function linhaAgregada(chave, arr){
+  const inv = soma(arr, r=>r.investimento), imp = soma(arr, r=>r.impressoes),
+        clk = soma(arr, r=>r.cliques), conv = soma(arr, r=>r.conversoes);
+  return { chave, investimento:inv, impressoes:imp, cliques:clk, conversoes:conv,
+    cpm: div(inv*1000, imp), cpc: div(inv, clk), ctr: div(clk, imp),
+    cpconv: div(inv, conv), txconv: div(conv, clk) };
+}
+
+function montarTabelaGoogle(atual, prev, deAnt){
+  const chaveFn = r => grupoTab === 'dia' ? r.dia : (r.anuncio || '(sem nome)');
+  const porChaveAtual = agrupar(atual, chaveFn);
+  const porChaveAnt   = agrupar(prev, chaveFn);
+
+  let linhas = [...porChaveAtual.entries()].map(([k, arr]) => {
+    const lin = linhaAgregada(k, arr);
+    lin._ant = linhaAgregada(k, porChaveAnt.get(k) || []);
+    return lin;
+  });
+
+  const dir = ordSort.dir === 'asc' ? 1 : -1;
+  linhas.sort((a,b) => {
+    const va = a[ordSort.key], vb = b[ordSort.key];
+    if (ordSort.key === 'chave') return dir * String(va).localeCompare(String(vb), 'pt-BR');
+    return dir * ((va == null ? -Infinity : va) - (vb == null ? -Infinity : vb));
+  });
+
+  const semAnterior = !deAnt;
+  const deltaTxt = (v, a) => {
+    if (semAnterior || v == null || a == null || a === 0) return '';
+    const variacao = (v - a) / a * 100;
+    if (Math.abs(variacao) < 0.5) return '<span class="delta-cell" style="color:var(--muted)">≈</span>';
+    const cor = variacao > 0 ? 'var(--good)' : 'var(--critical)';
+    return `<span class="delta-cell" style="color:${cor}">${variacao > 0 ? '▲' : '▼'}${Math.abs(variacao).toFixed(0)}%</span>`;
+  };
+
+  $('#tabela-g tbody').innerHTML = linhas.map(l => `<tr>
+      <td>${grupoTab === 'dia' ? dataBR(l.chave) : `<span class="wrap-ok">${esc(encurtar(l.chave))}</span>`}</td>
+      <td class="n">${esc(brl(l.investimento))}${deltaTxt(l.investimento, l._ant.investimento)}</td>
+      <td class="n">${numBR(l.impressoes)}${deltaTxt(l.impressoes, l._ant.impressoes)}</td>
+      <td class="n">${esc(nOrDash(l.cpm, brl))}${deltaTxt(l.cpm, l._ant.cpm)}</td>
+      <td class="n">${numBR(l.cliques)}${deltaTxt(l.cliques, l._ant.cliques)}</td>
+      <td class="n">${esc(nOrDash(l.cpc, brl))}${deltaTxt(l.cpc, l._ant.cpc)}</td>
+      <td class="n">${esc(pct(l.cliques, l.impressoes))}${deltaTxt(l.ctr, l._ant.ctr)}</td>
+      <td class="n">${num1(l.conversoes)}${deltaTxt(l.conversoes, l._ant.conversoes)}</td>
+      <td class="n">${esc(nOrDash(l.cpconv, brl))}${deltaTxt(l.cpconv, l._ant.cpconv)}</td>
+      <td class="n">${esc(pct(l.conversoes, l.cliques))}${deltaTxt(l.txconv, l._ant.txconv)}</td>
+    </tr>`).join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">sem dado no período</td></tr>';
+
+  $$('.sort-btn').forEach(b => b.removeAttribute('data-dir'));
+  const ativo = $(`.sort-btn[data-key="${ordSort.key}"]`);
+  if (ativo) ativo.setAttribute('data-dir', ordSort.dir);
+}
+
+/* ======================= RENDER ======================= */
+function render(){
+  if (aba === 'meta') renderMeta(); else renderGoogle();
+  $('#rodape').textContent = 'Fonte: Supabase (Stract) · atualizado ' + new Date().toLocaleString('pt-BR');
+}
+
+function resumoAba(dados, campoValor){
+  if (!dados.length) return 'sem dado';
+  const datas = dados.map(r=>r.dia).filter(Boolean).map(d=>String(d).slice(0,10)).sort();
+  return `${dataBR(datas[0])} → ${dataBR(datas[datas.length-1])} · ${brlCurto(soma(dados, campoValor))}`;
+}
+
+/* ======================= CARGA ======================= */
+async function carregar(){
+  $('#loading').classList.remove('hidden');
+  $('#erro').classList.add('hidden');
+  $('#app').classList.add('hidden');
+  try{
+    const [meta, gads] = await Promise.all([
+      sbPaginado(V_META, 'select=*&order=dia.asc'),
+      sbPaginado(V_GADS, `select=*&cliente=eq.${encodeURIComponent(CLIENTE_GADS)}&order=dia.asc`),
+    ]);
+    META = meta; GADS = gads;
+
+    $('#tab-meta-sub').textContent   = resumoAba(META, r=>r.gasto);
+    $('#tab-google-sub').textContent = resumoAba(GADS, r=>r.investimento);
+
+    /* Os limites do seletor de datas cobrem as duas contas juntas, já que o controle
+       é compartilhado entre as abas. */
+    const todas = [...META.map(r=>r.dia), ...GADS.map(r=>r.dia)]
+      .filter(Boolean).map(d=>String(d).slice(0,10)).sort();
+    if (todas.length){
+      ['#dt-de','#dt-ate'].forEach(s => { const el = $(s); el.min = todas[0]; el.max = todas[todas.length-1]; });
+      if (!$('#dt-de').value)  $('#dt-de').value  = todas[0];
+      if (!$('#dt-ate').value) $('#dt-ate').value = todas[todas.length-1];
+    }
+
+    render();
+    $('#loading').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+  } catch(e){
+    $('#loading').classList.add('hidden');
+    $('#erro').textContent = 'Não consegui carregar os dados do Supabase — ' + e.message;
+    $('#erro').classList.remove('hidden');
+  }
+}
+
+/* ======================= EVENTOS ======================= */
+function trocarAba(nova){
+  aba = nova;
+  $('#tab-meta').setAttribute('aria-selected', String(nova === 'meta'));
+  $('#tab-google').setAttribute('aria-selected', String(nova === 'google'));
+  $('#painel-meta').classList.toggle('hidden', nova !== 'meta');
+  $('#painel-google').classList.toggle('hidden', nova !== 'google');
+  render();
+}
+$('#tab-meta').addEventListener('click', () => trocarAba('meta'));
+$('#tab-google').addEventListener('click', () => trocarAba('google'));
+
+$$('.seg button').forEach(b => b.addEventListener('click', () => {
+  $$('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  render();
+}));
+['#dt-de','#dt-ate'].forEach(s => $(s).addEventListener('change', render));
+$('#dt-tudo').addEventListener('click', () => {
+  $('#dt-de').value = $('#dt-de').min; $('#dt-ate').value = $('#dt-ate').max; render();
+});
+
+$$('.tabs-mini button').forEach(b => b.addEventListener('click', () => {
+  $$('.tabs-mini button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  grupoTab = b.dataset.group;
+  render();
+}));
+
+$$('.sort-btn').forEach(b => b.addEventListener('click', () => {
+  const key = b.dataset.key;
+  if (ordSort.key === key) ordSort.dir = ordSort.dir === 'asc' ? 'desc' : 'asc';
+  else ordSort = { key, dir: key === 'chave' ? 'asc' : 'desc' };
+  render();
+}));
+
+$('#btn-refresh').addEventListener('click', () => {
+  const b = $('#btn-refresh'); b.disabled = true; b.textContent = '↻ Atualizando…';
+  carregar().finally(() => { b.disabled = false; b.textContent = '↻ Atualizar'; });
+});
+
+$('#btn-tema').addEventListener('click', () => {
+  document.documentElement.classList.toggle('dark');
+  try { localStorage.setItem('b16-tema', escuro() ? 'dark' : 'light'); } catch(e){}
+  if (META.length || GADS.length) render();
+});
+try { if (localStorage.getItem('b16-tema') === 'dark') document.documentElement.classList.add('dark'); } catch(e){}
+
+carregar();
+</script>
+</body>
+</html>
